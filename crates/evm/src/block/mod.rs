@@ -313,7 +313,10 @@ pub trait BlockExecutor {
         self.apply_pre_execution_changes()?;
 
         for tx in transactions {
-            self.execute_transaction(tx)?;
+            if self.execute_transaction(tx)? == u64::MAX {
+                // Stop execution if we hit the subblock gas limit.
+                break;
+            }
         }
 
         self.apply_post_execution_changes()
