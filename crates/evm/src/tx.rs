@@ -16,6 +16,8 @@ use alloy_eips::{
 use alloy_primitives::{Address, Bytes, TxKind};
 use revm::{context::TxEnv, context_interface::either::Either};
 
+use crate::alloc::borrow::ToOwned;
+
 /// Trait marking types that can be converted into a transaction environment.
 ///
 /// This is the primary trait that enables flexible transaction input for the EVM. The EVM's
@@ -254,6 +256,9 @@ impl FromRecoveredTx<TxEip4844> for TxEnv {
 
 impl FromRecoveredTx<TxGoat> for TxEnv {
     fn from_recovered_tx(tx: &TxGoat, caller: Address) -> Self {
+        let mut goat_tx = tx.to_owned();
+        let goat = goat_tx.decode_tx().expect("decode goat tx err");
+
         let TxGoat { module, action, nonce, input, inner: _, chain_id } = tx;
         Self {
             tx_type: tx.ty(),
@@ -264,6 +269,7 @@ impl FromRecoveredTx<TxGoat> for TxEnv {
             data: input.clone(),
             nonce: *nonce,
             chain_id: Some(*chain_id),
+            goat: Some(goat),
             ..Default::default()
         }
     }
